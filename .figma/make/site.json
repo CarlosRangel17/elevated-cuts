@@ -1,0 +1,10 @@
+{
+  "description": "Elevated Cuts offers a seamless mobile booking experience for customers in Lubbock, TX, featuring real-time staff availability and dynamic service listings.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

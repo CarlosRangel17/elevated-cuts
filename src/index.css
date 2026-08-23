@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+/* ─── Semantic token layer ─────────────────────────────────── */
+:root {
+  --canvas:        #F4F3EF;
+  --surface:       #FFFFFF;
+  --surface-hi:    #F0EEE9;
+  --subtle:        #E8E7E2;
+  --ink:           #0E0E1A;
+  --ink-dim:       #56566A;
+  --ink-faint:     #9898AB;
+  --accent:        #1A63EE;
+  --accent-dim:    rgba(26,99,238,0.10);
+  --gold:          #D9920E;
+  --gold-dim:      rgba(217,146,14,0.12);
+  --rim:           #DDDCD5;
+  --rim-strong:    #C4C3BB;
+  --bone:          #E4E3DE;
+  --bone-hi:       #EEEDEA;
+  --live:          #16A34A;
+  --live-dim:      rgba(22,163,74,0.12);
+  --dead:          #DC2626;
+}
+
+.dark {
+  --canvas:        #080910;
+  --surface:       #0E0F1A;
+  --surface-hi:    #141528;
+  --subtle:        #1A1B2E;
+  --ink:           #EDE8DD;
+  --ink-dim:       #9898AB;
+  --ink-faint:     #56566A;
+  --accent:        #4282FF;
+  --accent-dim:    rgba(66,130,255,0.14);
+  --gold:          #F0A820;
+  --gold-dim:      rgba(240,168,32,0.14);
+  --rim:           #1C1D2C;
+  --rim-strong:    #282940;
+  --bone:          #181928;
+  --bone-hi:       #20212E;
+  --live:          #22C55E;
+  --live-dim:      rgba(34,197,94,0.12);
+  --dead:          #F87171;
+}
+
+/* ─── Tailwind v4 theme mapping ───────────────────────────── */
+@theme inline {
+  --color-canvas:       var(--canvas);
+  --color-surface:      var(--surface);
+  --color-surface-hi:   var(--surface-hi);
+  --color-subtle:       var(--subtle);
+  --color-ink:          var(--ink);
+  --color-ink-dim:      var(--ink-dim);
+  --color-ink-faint:    var(--ink-faint);
+  --color-accent:       var(--accent);
+  --color-accent-dim:   var(--accent-dim);
+  --color-gold:         var(--gold);
+  --color-gold-dim:     var(--gold-dim);
+  --color-rim:          var(--rim);
+  --color-rim-strong:   var(--rim-strong);
+  --color-bone:         var(--bone);
+  --color-bone-hi:      var(--bone-hi);
+  --color-live:         var(--live);
+  --color-live-dim:     var(--live-dim);
+  --color-dead:         var(--dead);
+
+  --font-sans:    'Outfit', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  --font-display: 'Barlow Condensed', system-ui, sans-serif;
+}
+
+/* ─── Global resets ───────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--canvas);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+::-webkit-scrollbar          { width: 3px; height: 3px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--rim-strong); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+
+/* ─── Skeleton shimmer ────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bone)    25%,
+    var(--bone-hi) 50%,
+    var(--bone)    75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+  border-radius: 6px;
+}
+
+/* ─── Entrance animations ─────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+.fade-up { animation: fadeUp 0.45s ease forwards; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+.sheet-up { animation: slideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes pulseRing {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.5); }
+}
+.live-pulse { animation: pulseRing 1.8s ease infinite; }
+
+/* ─── Scrollable rows without scrollbar chrome ─────────────── */
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
