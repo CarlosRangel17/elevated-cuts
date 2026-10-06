@@ -1,24 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { STYLISTS, type Stylist } from '../data/stylists'
+import { BrandLogo } from '../components/Brand'
+import { IconArrowUpRight, IconMoon, IconSun } from '../components/icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface Stylist {
-  id: number; name: string; role: string; years: number; initials: string
-  color: string; next: string; available: boolean; services: string[]
-}
-
 type Step = 1 | 2 | 3 | 4
 
-// ─── Data (App 2 scheduling API shape) ───────────────────────────────────────
-
-const TEAM: Stylist[] = [
-  { id: 1, name: 'Evelyn Rodriguez', role: 'Owner · Operator',    years: 18, initials: 'ER', color: '#1A63EE', next: 'Today · 10:00 AM', available: true,  services: ["Men's Cuts", 'Fades', 'Beard'] },
-  { id: 2, name: 'Angela',           role: 'Senior Stylist',       years: 29, initials: 'AN', color: '#D9920E', next: 'Today · 11:30 AM', available: true,  services: ["Men's Cuts", 'Kids', 'Shampoo'] },
-  { id: 3, name: 'Melinda',          role: 'Shop Veteran',         years: 35, initials: 'ME', color: '#7C3AED', next: 'Today · 2:00 PM',  available: true,  services: ["Men's Cuts", 'Buzz Cut', 'Fades'] },
-  { id: 4, name: 'Alexis',           role: 'Licensed Esthetician', years: 8,  initials: 'AL', color: '#EC4899', next: 'Tomorrow · 9:30 AM', available: false, services: ["Men's Facial", 'Skin Care', 'Eyebrow'] },
-  { id: 5, name: 'Laura',            role: 'Stylist · Sat Only',   years: 5,  initials: 'LA', color: '#0D9488', next: 'Sat · 10:00 AM',  available: false, services: ['Haircuts', 'Beard Trim', 'Wax'] },
-  { id: 6, name: 'Princess',         role: 'Senior Stylist',       years: 20, initials: 'PR', color: '#EA580C', next: 'Today · 1:00 PM',  available: true,  services: ['Fades', "Men's Cuts", 'Beard'] },
-]
+// ─── Data ────────────────────────────────────────────────────────────────────
 
 // Slots that are "taken" — simulating live booking occupancy from App 2
 const TAKEN_SLOTS_BY_DAY: Record<number, string[]> = {
@@ -91,30 +80,6 @@ const IconCheck = () => (
   </svg>
 )
 
-const IconScissors = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-    <line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/>
-    <line x1="8.12" y1="8.12" x2="12" y2="12"/>
-  </svg>
-)
-
-const IconSun = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <circle cx="12" cy="12" r="5"/>
-    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-  </svg>
-)
-
-const IconMoon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-  </svg>
-)
-
 const IconX = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -144,67 +109,63 @@ function StaffStep({
   return (
     <div className="fade-up">
       <div className="mb-6">
-        <h2 className="font-display font-black text-4xl text-ink leading-none">CHOOSE YOUR STYLIST</h2>
-        <p className="text-ink-dim text-sm mt-2">Real-time availability from the scheduling engine.</p>
+        <h2 className="font-display font-extrabold text-4xl text-ink leading-none uppercase">Choose your stylist</h2>
+        <p className="text-ink-dim text-sm mt-2">Pick who you want in the chair.</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {TEAM.map(s => {
+      <ul className="grid grid-cols-2 gap-4">
+        {STYLISTS.map(s => {
           const isSelected = selected?.id === s.id
           return (
-            <button
-              key={s.id}
-              onClick={() => onSelect(s)}
-              className={`relative flex flex-col items-center gap-3 p-4 rounded-2xl border-2 text-left transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
-                isSelected
-                  ? 'border-accent bg-accent-dim shadow-lg shadow-accent/10'
-                  : 'border-rim bg-surface hover:border-rim-strong'
-              }`}
-            >
-              {/* Selected check */}
-              {isSelected && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-accent rounded-full flex items-center justify-center text-white">
-                  <IconCheck />
-                </div>
-              )}
-
-              {/* Avatar */}
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-display font-black text-xl flex-shrink-0"
-                style={{ backgroundColor: s.color }}
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(s)}
+                aria-pressed={isSelected}
+                className={`relative flex h-full w-full flex-col overflow-hidden rounded-2xl border-2 text-left transition-all duration-200 active:scale-[0.98] ${
+                  isSelected
+                    ? 'border-accent bg-accent-dim'
+                    : 'border-rim bg-surface hover:border-rim-strong'
+                }`}
               >
-                {s.initials}
-              </div>
+                <div className="relative aspect-square w-full bg-bone">
+                  {s.photo ? (
+                    <img
+                      src={s.photo}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={{ objectPosition: s.photoPosition }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-subtle font-display text-5xl font-extrabold text-ink-faint">
+                      {s.initials}
+                    </div>
+                  )}
+                  {isSelected && (
+                    <div className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-accent text-on-accent">
+                      <IconCheck />
+                    </div>
+                  )}
+                </div>
 
-              {/* Info */}
-              <div className="text-center w-full">
-                <p className="font-semibold text-ink text-sm leading-tight">{s.name}</p>
-                <p className="text-ink-faint text-[11px] mt-0.5">{s.role}</p>
-                <p className="text-ink-faint text-[10px] font-mono">{s.years} yrs</p>
-              </div>
-
-              {/* Availability tag */}
-              <div className={`w-full rounded-xl px-2 py-2 text-center min-h-[44px] flex flex-col justify-center ${
-                s.available ? 'bg-live-dim border border-live/20' : 'bg-bone border border-rim'
-              }`}>
-                {s.available && (
-                  <p className="text-live text-[9px] font-mono font-semibold uppercase tracking-wider">Next Avail.</p>
-                )}
-                <p className={`text-[10px] font-mono font-medium leading-tight ${s.available ? 'text-ink' : 'text-ink-faint'}`}>
-                  {s.next}
-                </p>
-              </div>
-
-              {/* Service chips */}
-              <div className="flex flex-wrap gap-1 justify-center">
-                {s.services.slice(0, 2).map(sv => (
-                  <span key={sv} className="text-[9px] font-mono bg-bone text-ink-faint rounded-full px-1.5 py-0.5">{sv}</span>
-                ))}
-              </div>
-            </button>
+                <div className="flex flex-1 flex-col gap-1 p-4">
+                  <p className="font-display text-2xl font-extrabold uppercase leading-none text-ink">{s.name}</p>
+                  <p className="font-mono text-[11px] uppercase tracking-wide text-ink-faint">{s.role}</p>
+                  <p className="mt-1 text-xs font-semibold text-gold">{s.specialty}</p>
+                  {s.bookingUrl && (
+                    <p className="mt-2 inline-flex items-center gap-1 font-mono text-[11px] font-semibold uppercase text-accent">
+                      Books on Square
+                      <IconArrowUpRight className="h-4 w-4" />
+                    </p>
+                  )}
+                </div>
+              </button>
+            </li>
           )
         })}
-      </div>
+      </ul>
     </div>
   )
 }
@@ -258,13 +219,13 @@ function CalendarStep({
       <div className="bg-surface border border-rim rounded-2xl p-5">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-5">
-          <button onClick={prevMonth} className="w-9 h-9 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:border-rim-strong hover:text-ink transition-all">
+          <button onClick={prevMonth} className="w-12 h-12 rounded-xl border border-rim-strong flex items-center justify-center text-ink-dim hover:text-ink transition-all">
             <IconChevLeft />
           </button>
           <h3 className="font-display font-bold text-xl text-ink">
             {MONTH_NAMES[viewMonth]} {viewYear}
           </h3>
-          <button onClick={nextMonth} className="w-9 h-9 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:border-rim-strong hover:text-ink transition-all">
+          <button onClick={nextMonth} className="w-12 h-12 rounded-xl border border-rim-strong flex items-center justify-center text-ink-dim hover:text-ink transition-all">
             <IconChevRight />
           </button>
         </div>
@@ -295,9 +256,9 @@ function CalendarStep({
                 key={day}
                 disabled={!available}
                 onClick={() => onSelect(new Date(viewYear, viewMonth, day))}
-                className={`aspect-square rounded-xl text-sm font-mono font-medium flex items-center justify-center transition-all duration-150 min-h-[44px] ${
+                className={`aspect-square rounded-xl text-sm font-mono font-medium flex items-center justify-center transition-all duration-150 min-h-12 ${
                   sel
-                    ? 'bg-accent text-white shadow-lg shadow-accent/20 scale-105'
+                    ? 'bg-accent text-on-accent shadow-lg shadow-accent/20 scale-105'
                     : tod && available
                     ? 'border-2 border-accent text-accent hover:bg-accent-dim'
                     : available
@@ -378,7 +339,7 @@ function TimeSlotsStep({
                 ${isTaken
                   ? 'bg-bone border border-rim text-ink-faint/50 cursor-not-allowed line-through'
                   : isSelected
-                  ? 'bg-accent text-white border-2 border-accent shadow-lg shadow-accent/20 scale-[1.03]'
+                  ? 'bg-accent text-on-accent border-2 border-accent shadow-lg shadow-accent/20 scale-[1.03]'
                   : 'border border-rim-strong text-ink hover:border-accent hover:text-accent hover:bg-accent-dim'
                 }
               `}
@@ -423,7 +384,7 @@ function CheckoutSheet({ staff, date, time, notes, onNotesChange, onClose, onCon
               <h3 className="font-display font-black text-3xl text-ink">CONFIRM BOOKING</h3>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:text-ink hover:border-rim-strong transition-all"
+                className="w-12 h-12 rounded-xl border border-rim-strong flex items-center justify-center text-ink-dim hover:text-ink transition-all" aria-label="Close"
               >
                 <IconX />
               </button>
@@ -433,11 +394,10 @@ function CheckoutSheet({ staff, date, time, notes, onNotesChange, onClose, onCon
             <div className="bg-subtle rounded-2xl p-4 mb-5 flex flex-col gap-3">
               {/* Stylist row */}
               <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-display font-black text-base flex-shrink-0"
-                  style={{ backgroundColor: staff.color }}
-                >
-                  {staff.initials}
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-bone flex-shrink-0 flex items-center justify-center font-display font-extrabold text-lg text-ink-faint">
+                  {staff.photo ? (
+                    <img src={staff.photo} alt="" className="w-full h-full object-cover" style={{ objectPosition: staff.photoPosition }} />
+                  ) : staff.initials}
                 </div>
                 <div>
                   <p className="font-semibold text-ink text-sm">{staff.name}</p>
@@ -478,11 +438,11 @@ function CheckoutSheet({ staff, date, time, notes, onNotesChange, onClose, onCon
 
             {/* Payment buttons */}
             <div className="flex flex-col gap-2.5 mb-4">
-              <button className="flex items-center justify-center gap-2 w-full min-h-[52px] bg-black text-white rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition-all">
+              <button className="flex items-center justify-center gap-2 w-full min-h-14 bg-black text-white rounded-xl font-semibold text-sm hover:opacity-90 active:scale-[0.98] transition-all">
                 <IconApple />
                 Pay with Apple Pay
               </button>
-              <button className="flex items-center justify-center gap-2 w-full min-h-[52px] bg-white border border-rim rounded-xl font-semibold text-sm text-[#444] hover:bg-subtle active:scale-[0.98] transition-all">
+              <button className="flex items-center justify-center gap-2 w-full min-h-14 bg-white border border-rim rounded-xl font-semibold text-sm text-[#444] hover:bg-subtle active:scale-[0.98] transition-all">
                 <IconGoogle />
                 Pay with Google Pay
               </button>
@@ -496,7 +456,7 @@ function CheckoutSheet({ staff, date, time, notes, onNotesChange, onClose, onCon
 
             <button
               onClick={onConfirm}
-              className="w-full min-h-[52px] bg-accent text-white font-semibold text-base rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
+              className="w-full min-h-14 bg-accent text-on-accent font-semibold text-base rounded-xl hover:opacity-90 active:scale-[0.98] transition-all"
             >
               Confirm Reservation
             </button>
@@ -537,7 +497,7 @@ function ConfirmedScreen({ staff, date, time, onDone }: {
           <span className="font-medium">Address:</span> 1018 Slide Rd, Lubbock TX 79416
         </p>
       </div>
-      <button onClick={onDone} className="w-full max-w-sm min-h-[52px] bg-ink text-canvas font-semibold rounded-xl hover:opacity-90 transition-all">
+      <button onClick={onDone} className="w-full max-w-sm min-h-14 bg-ink text-canvas font-semibold rounded-xl hover:opacity-90 transition-all">
         Back to Home
       </button>
     </div>
@@ -556,9 +516,9 @@ function ProgressBar({ step }: { step: Step }) {
           <div className="flex flex-col items-center gap-1 flex-1">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
               step > s
-                ? 'bg-accent text-white'
+                ? 'bg-accent text-on-accent'
                 : step === s
-                ? 'bg-accent text-white ring-4 ring-accent/20'
+                ? 'bg-accent text-on-accent ring-4 ring-accent/20'
                 : 'bg-bone text-ink-faint border border-rim'
             }`}>
               {step > s ? <IconCheck /> : s}
@@ -580,11 +540,13 @@ function ProgressBar({ step }: { step: Step }) {
 
 interface BookingFlowProps {
   dark: boolean; onToggleDark: () => void; onBack: () => void
+  initialStylistId?: string
 }
 
-export default function BookingFlow({ dark, onToggleDark, onBack }: BookingFlowProps) {
-  const [step,          setStep]          = useState<Step>(1)
-  const [staff,         setStaff]         = useState<Stylist | null>(null)
+export default function BookingFlow({ dark, onToggleDark, onBack, initialStylistId }: BookingFlowProps) {
+  const presetStylist = STYLISTS.find(s => s.id === initialStylistId && !s.bookingUrl) ?? null
+  const [step,          setStep]          = useState<Step>(presetStylist ? 2 : 1)
+  const [staff,         setStaff]         = useState<Stylist | null>(presetStylist)
   const [date,          setDate]          = useState<Date | null>(null)
   const [time,          setTime]          = useState<string | null>(null)
   const [notes,         setNotes]         = useState('')
@@ -624,25 +586,21 @@ export default function BookingFlow({ dark, onToggleDark, onBack }: BookingFlowP
   return (
     <div className="min-h-screen bg-canvas">
       {/* Booking header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-xl border-b border-rim flex items-center justify-between px-4 sm:px-6 h-16">
+      <header className="sticky top-0 z-30 bg-canvas border-b border-rim flex items-center justify-between px-4 sm:px-6 h-16">
         <button
           onClick={handleBack}
-          className="w-10 h-10 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:text-ink hover:border-rim-strong transition-all"
+          className="w-12 h-12 rounded-xl border border-rim-strong flex items-center justify-center text-ink-dim hover:text-ink transition-all"
+          aria-label="Back"
         >
           <IconBack />
         </button>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white">
-            <IconScissors />
-          </div>
-          <span className="font-display font-black text-xl text-ink">ELEVATED CUTS</span>
-        </div>
+        <BrandLogo className="w-[124px]" />
         <button
           onClick={onToggleDark}
-          className="w-10 h-10 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:text-ink transition-all"
-          aria-label="Toggle theme"
+          className="w-12 h-12 rounded-xl border border-rim-strong flex items-center justify-center text-ink-dim hover:text-ink transition-all"
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {dark ? <IconSun /> : <IconMoon />}
+          {dark ? <IconSun className="w-5 h-5" /> : <IconMoon className="w-5 h-5" />}
         </button>
       </header>
 
@@ -653,7 +611,17 @@ export default function BookingFlow({ dark, onToggleDark, onBack }: BookingFlowP
 
         {/* Steps */}
         {step === 1 && (
-          <StaffStep selected={staff} onSelect={s => { setStaff(s); setStep(2) }} />
+          <StaffStep
+            selected={staff}
+            onSelect={s => {
+              if (s.bookingUrl) {
+                window.open(s.bookingUrl, '_blank', 'noopener,noreferrer')
+                return
+              }
+              setStaff(s)
+              setStep(2)
+            }}
+          />
         )}
         {step === 2 && (
           <CalendarStep selected={date} onSelect={d => { setDate(d); setStep(3) }} />
@@ -668,9 +636,9 @@ export default function BookingFlow({ dark, onToggleDark, onBack }: BookingFlowP
             <button
               onClick={handleNext}
               disabled={!canAdvance}
-              className={`w-full min-h-[52px] font-semibold text-base rounded-xl transition-all ${
+              className={`w-full min-h-14 font-semibold text-base rounded-xl transition-all ${
                 canAdvance
-                  ? 'bg-accent text-white hover:opacity-90 active:scale-[0.98]'
+                  ? 'bg-accent text-on-accent hover:opacity-90 active:scale-[0.98]'
                   : 'bg-bone text-ink-faint cursor-not-allowed'
               }`}
             >
@@ -684,8 +652,10 @@ export default function BookingFlow({ dark, onToggleDark, onBack }: BookingFlowP
           <div className="mt-4 bg-subtle rounded-xl px-4 py-3 flex items-center gap-3 flex-wrap text-xs font-mono text-ink-dim fade-up">
             {staff && (
               <div className="flex items-center gap-1.5">
-                <div className="w-5 h-5 rounded-full text-white text-[9px] font-display font-black flex items-center justify-center" style={{ backgroundColor: staff.color }}>
-                  {staff.initials}
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-bone flex items-center justify-center text-[9px] font-display font-extrabold text-ink-faint">
+                  {staff.photo ? (
+                    <img src={staff.photo} alt="" className="w-full h-full object-cover" style={{ objectPosition: staff.photoPosition }} />
+                  ) : staff.initials}
                 </div>
                 <span className="text-ink font-medium">{staff.name.split(' ')[0]}</span>
               </div>

@@ -1,577 +1,576 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { STYLISTS, type Stylist } from '../data/stylists'
+import { BrandLogo, CroppedImage } from '../components/Brand'
+import {
+  IconArrowRight, IconArrowUpRight, IconClock, IconDoor, IconMail, IconMoon,
+  IconPhone, IconPin, IconScissors, IconSparkle, IconSun, IconUser,
+} from '../components/icons'
+import flyerSrc from '../assets/elevated-cuts-flyer.webp'
+import storeFrontSrc from '../assets/elevated-cuts-store-front.webp'
 
-// ─── Data contracts (App 2 + App 3 API shapes) ──────────────────────────────
+// ─── Data contracts ──────────────────────────────────────────────────────────
+
+type IconComponent = (props: { className?: string }) => ReactNode
 
 interface Service {
-  id: number; name: string; duration: number; price: number; tag?: string
-}
-interface Stylist {
-  id: number; name: string; role: string; years: number; initials: string
-  color: string; next: string; available: boolean; services: string[]
-}
-interface ShopEvent {
-  date: string; day: string; title: string; description: string; cta: string
+  id: number
+  name: string
+  duration: number
+  price: number
+  tag?: string
 }
 
-// ─── Seed data (replaces CMS/scheduling API payloads) ───────────────────────
+interface Metric {
+  id: string
+  title: string
+  detail: string
+  Icon: IconComponent
+}
+
+interface Promo {
+  id: string
+  title: string
+  detail: string
+  Icon: IconComponent
+}
+
+interface DayHours {
+  day: string
+  short: string
+  /** [open, close] in minutes after midnight, Lubbock time. null = closed. */
+  range: [number, number] | null
+}
+
+// ─── Content ─────────────────────────────────────────────────────────────────
+
+const SHOP = {
+  address1: '1018 Slide Rd',
+  address2: 'Lubbock, TX 79416',
+  phoneDisplay: '(806) 407-3129',
+  phoneHref: 'tel:8064073129',
+  email: 'elevatedcuts2024@gmail.com',
+  mapsHref: 'https://www.google.com/maps/search/?api=1&query=1018+Slide+Rd+Lubbock+TX+79416',
+}
+
+const METRICS: Metric[] = [
+  { id: 'fades',   title: 'Premium Fades & Tailoring', detail: "Men's precision cuts",    Icon: IconScissors },
+  { id: 'facials', title: 'Facials & Skin Therapy',    detail: 'Licensed esthetician',    Icon: IconSparkle },
+  { id: 'walkins', title: 'Walk-Ins Welcome',          detail: 'No appointment needed',   Icon: IconDoor },
+  { id: 'where',   title: 'Located off Slide Rd',      detail: '1018 Slide Rd, Lubbock',  Icon: IconPin },
+]
 
 const SERVICES: Service[] = [
-  { id: 1,  name: 'Classic Haircut',  duration: 30, price: 25 },
-  { id: 2,  name: 'Skin Fade',        duration: 45, price: 30, tag: 'POPULAR' },
-  { id: 3,  name: 'Beard Trim',       duration: 20, price: 15 },
-  { id: 4,  name: 'Cut + Beard',      duration: 60, price: 40, tag: 'BEST VALUE' },
-  { id: 5,  name: "Men's Facial",     duration: 45, price: 55, tag: 'NEW' },
-  { id: 6,  name: 'Shampoo & Style',  duration: 30, price: 20 },
-  { id: 7,  name: "Kids' Cut",        duration: 25, price: 20 },
-  { id: 8,  name: 'Buzz Cut',         duration: 15, price: 18 },
-  { id: 9,  name: 'Eyebrow Trim',     duration: 15, price: 12 },
-  { id: 10, name: 'Groom Package',    duration: 90, price: 65, tag: 'DEAL' },
+  { id: 1,  name: 'Classic Haircut', duration: 30, price: 25 },
+  { id: 2,  name: 'Skin Fade',       duration: 45, price: 30, tag: 'Popular' },
+  { id: 3,  name: 'Beard Trim',      duration: 20, price: 15 },
+  { id: 4,  name: 'Cut + Beard',     duration: 60, price: 40, tag: 'Best Value' },
+  { id: 5,  name: "Men's Facial",    duration: 45, price: 55, tag: 'New' },
+  { id: 6,  name: 'Shampoo & Style', duration: 30, price: 20 },
+  { id: 7,  name: "Kids' Cut",       duration: 25, price: 20 },
+  { id: 8,  name: 'Buzz Cut',        duration: 15, price: 18 },
+  { id: 9,  name: 'Eyebrow Trim',    duration: 15, price: 12 },
+  { id: 10, name: 'Groom Package',   duration: 90, price: 65, tag: 'Deal' },
 ]
 
-const TEAM: Stylist[] = [
-  { id: 1, name: 'Evelyn Rodriguez', role: 'Owner · Operator',      years: 18, initials: 'ER', color: '#1A63EE', next: 'Today · 10:00 AM', available: true,  services: ["Men's Cuts", 'Fades', 'Beard'] },
-  { id: 2, name: 'Angela',           role: 'Senior Stylist',         years: 29, initials: 'AN', color: '#D9920E', next: 'Today · 11:30 AM', available: true,  services: ["Men's Cuts", 'Kids', 'Shampoo'] },
-  { id: 3, name: 'Melinda',          role: 'Shop Veteran',           years: 35, initials: 'ME', color: '#7C3AED', next: 'Today · 2:00 PM',  available: true,  services: ["Men's Cuts", 'Buzz Cut', 'Fades'] },
-  { id: 4, name: 'Alexis',           role: 'Licensed Esthetician',   years: 8,  initials: 'AL', color: '#EC4899', next: 'Tomorrow · 9:30 AM', available: false, services: ["Men's Facial", 'Skin Care', 'Eyebrow'] },
-  { id: 5, name: 'Laura',            role: 'Stylist · Sat Only',     years: 5,  initials: 'LA', color: '#0D9488', next: 'Sat · 10:00 AM',  available: false, services: ['Haircuts', 'Beard Trim', 'Wax'] },
-  { id: 6, name: 'Princess',         role: 'Senior Stylist',         years: 20, initials: 'PR', color: '#EA580C', next: 'Today · 1:00 PM',  available: true,  services: ['Fades', "Men's Cuts", 'Beard'] },
+const PROMOS: Promo[] = [
+  { id: 'facials', title: "Men's Facials",       detail: 'Now offered by appointment with licensed esthetician Alexis.', Icon: IconSparkle },
+  { id: 'laura',   title: 'Laura Joins the Team', detail: 'Another stylist is now available for appointments.',          Icon: IconUser },
+  { id: 'late',    title: 'Open Late',            detail: 'Evening appointments available by request.',                  Icon: IconClock },
 ]
 
-const EVENTS: ShopEvent[] = [
-  { date: 'Sep 6',  day: 'SAT', title: 'Back-to-School Cut Day',       description: "Kids cuts $15 all day. Walk-ins welcome. Bring the whole crew in.",            cta: 'RSVP Free'   },
-  { date: 'Sep 14', day: 'SUN', title: 'Community Appreciation Day',   description: 'Veterans and first responders receive 20% off all services. No appointment needed.', cta: 'Learn More'  },
-  { date: 'Oct 1',  day: 'THU', title: "2nd Anniversary Celebration",  description: 'Free drinks, giveaways, and live cutting demonstrations at the shop on Slide Rd.', cta: 'Reserve Seat' },
+const HOURS: DayHours[] = [
+  { day: 'Monday',    short: 'Mon', range: [9 * 60, 18 * 60] },
+  { day: 'Tuesday',   short: 'Tue', range: [9 * 60, 18 * 60] },
+  { day: 'Wednesday', short: 'Wed', range: [9 * 60, 18 * 60] },
+  { day: 'Thursday',  short: 'Thu', range: [9 * 60, 18 * 60] },
+  { day: 'Friday',    short: 'Fri', range: [9 * 60, 18 * 60] },
+  { day: 'Saturday',  short: 'Sat', range: [9 * 60, 14 * 60] },
+  { day: 'Sunday',    short: 'Sun', range: null },
 ]
 
-const GALLERY = [
-  { id: 1, url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&h=720&fit=crop&auto=format', alt: 'Client in leather barber chair', span: 'row-span-2' },
-  { id: 2, url: 'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=600&h=480&fit=crop&auto=format', alt: 'Barber styling with blow dryer' },
-  { id: 3, url: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=600&h=480&fit=crop&auto=format', alt: 'Straight razor beard shave' },
-  { id: 4, url: 'https://images.unsplash.com/photo-1647140655214-e4a2d914971f?w=600&h=480&fit=crop&auto=format', alt: 'Precision scissors cut' },
-  { id: 5, url: 'https://images.unsplash.com/photo-1576168056582-0a851a87ab8e?w=600&h=380&fit=crop&auto=format', alt: 'Premium leather barber chairs' },
+const PAYMENT_METHODS = ['Apple Pay', 'Google Pay', 'CashApp', 'Visa', 'Mastercard', 'Amex']
+
+const NAV_LINKS = [
+  { href: '#services', label: 'Services' },
+  { href: '#team',     label: 'Stylists' },
+  { href: '#new',      label: "What's New" },
+  { href: '#visit',    label: 'Visit' },
 ]
 
-// ─── Icon atoms ──────────────────────────────────────────────────────────────
+// ─── Shop clock ──────────────────────────────────────────────────────────────
 
-const IconScissors = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-    <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
-    <line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/>
-    <line x1="8.12" y1="8.12" x2="12" y2="12"/>
-  </svg>
-)
+function formatMinutes(total: number): string {
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  const h12 = h % 12 === 0 ? 12 : h % 12
+  return `${h12}:${m.toString().padStart(2, '0')} ${suffix}`
+}
 
-const IconSun = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <circle cx="12" cy="12" r="5"/>
-    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-  </svg>
-)
+function getShopClock(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago', weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23',
+  }).formatToParts(date)
+  const pick = (type: string) => parts.find(p => p.type === type)?.value ?? ''
+  const dayIdx = Math.max(0, HOURS.findIndex(h => h.short === pick('weekday')))
+  return { dayIdx, minutes: Number(pick('hour')) * 60 + Number(pick('minute')) }
+}
 
-const IconMoon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-  </svg>
-)
+function getOpenStatus(date: Date): { open: boolean; label: string; dayIdx: number } {
+  const { dayIdx, minutes } = getShopClock(date)
+  const today = HOURS[dayIdx].range
+  if (today && minutes >= today[0] && minutes < today[1]) {
+    return { open: true, label: `Open now · until ${formatMinutes(today[1])}`, dayIdx }
+  }
+  for (let i = 0; i < 7; i++) {
+    const idx = (dayIdx + i) % 7
+    const range = HOURS[idx].range
+    if (!range || (i === 0 && minutes >= range[1])) continue
+    const when = i === 0 ? '' : i === 1 ? 'tomorrow ' : `${HOURS[idx].short} `
+    return { open: false, label: `Closed · opens ${when}${formatMinutes(range[0])}`, dayIdx }
+  }
+  return { open: false, label: 'Closed', dayIdx }
+}
 
-const IconPin = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-  </svg>
-)
+function useOpenStatus() {
+  const [status, setStatus] = useState(() => getOpenStatus(new Date()))
+  useEffect(() => {
+    const id = window.setInterval(() => setStatus(getOpenStatus(new Date())), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+  return status
+}
 
-const IconPhone = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.94-.94a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-  </svg>
-)
+// ─── Shared UI atoms ─────────────────────────────────────────────────────────
 
-const IconClock = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-  </svg>
-)
+const CONTAINER = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
-const IconStar = ({ filled = true }: { filled?: boolean }) => (
-  <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-  </svg>
-)
+const BTN_BASE =
+  'inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-6 font-display text-lg font-bold uppercase tracking-wider transition active:scale-[0.98]'
+const BTN_PRIMARY = `${BTN_BASE} bg-accent text-on-accent hover:brightness-110`
+const BTN_OUTLINE = `${BTN_BASE} border-2 border-panel-rim text-panel-ink hover:bg-white/10`
+const BTN_GHOST = `${BTN_BASE} border-2 border-rim-strong text-ink hover:bg-subtle`
 
-const IconCheck = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-
-const IconChevronRight = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <polyline points="9 18 15 12 9 6"/>
-  </svg>
-)
-
-const IconMail = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-    <polyline points="22,6 12,13 2,6"/>
-  </svg>
-)
-
-// ─── Skeleton atoms ──────────────────────────────────────────────────────────
-
-const SkeletonLine = ({ w = 'w-full', h = 'h-4' }: { w?: string; h?: string }) => (
-  <div className={`shimmer ${w} ${h}`} />
-)
-
-const SkeletonServiceCard = () => (
-  <div className="flex items-center justify-between py-4 border-b border-rim gap-4">
-    <div className="flex flex-col gap-2 flex-1">
-      <SkeletonLine w="w-2/3" h="h-4" />
-      <SkeletonLine w="w-1/3" h="h-3" />
+function SectionHeading({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
+  return (
+    <div className="mb-6 sm:mb-8">
+      <p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-gold">{eyebrow}</p>
+      <h2 className="font-display text-4xl font-extrabold uppercase leading-[0.95] text-ink sm:text-5xl">
+        {children}
+      </h2>
     </div>
-    <SkeletonLine w="w-16" h="h-5" />
-  </div>
-)
+  )
+}
 
-const SkeletonStaffCard = () => (
-  <div className="flex-shrink-0 w-[160px] bg-surface rounded-2xl p-4 flex flex-col items-center gap-3">
-    <div className="shimmer w-16 h-16 rounded-full" />
-    <div className="w-full flex flex-col items-center gap-2">
-      <SkeletonLine w="w-20" h="h-4" />
-      <SkeletonLine w="w-24" h="h-3" />
-    </div>
-    <div className="shimmer w-full h-8 rounded-full" />
-  </div>
-)
-
-const SkeletonEventCard = () => (
-  <div className="bg-surface rounded-2xl p-5 flex flex-col gap-3">
-    <div className="flex gap-3 items-center">
-      <div className="shimmer w-14 h-14 rounded-xl" />
-      <div className="flex flex-col gap-2 flex-1">
-        <SkeletonLine w="w-3/4" h="h-4" />
-        <SkeletonLine w="w-1/2" h="h-3" />
-      </div>
-    </div>
-    <SkeletonLine w="w-full" h="h-3" />
-    <SkeletonLine w="w-5/6" h="h-3" />
-    <div className="shimmer w-28 h-9 rounded-full" />
-  </div>
-)
+function StatusPill({ open, label }: { open: boolean; label: string }) {
+  return (
+    <span
+      className={`inline-flex min-h-8 items-center gap-2 whitespace-nowrap rounded-full border px-3 font-mono text-xs font-semibold uppercase tracking-wide ${
+        open ? 'border-live/40 bg-live-dim text-live' : 'border-rim-strong bg-bone text-ink-dim'
+      }`}
+    >
+      <span className={`block h-2 w-2 rounded-full ${open ? 'live-pulse bg-live' : 'bg-ink-faint'}`} />
+      {label}
+    </span>
+  )
+}
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 
 interface HeaderProps {
-  dark: boolean; onToggleDark: () => void; onBook: () => void; scrolled: boolean
+  dark: boolean
+  onToggleDark: () => void
+  onBook: () => void
 }
 
-function SiteHeader({ dark, onToggleDark, onBook, scrolled }: HeaderProps) {
+function SiteHeader({ dark, onToggleDark, onBook }: HeaderProps) {
   return (
-    <header
-      className={`sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 h-16 transition-all duration-300 ${
-        scrolled
-          ? 'bg-surface/90 backdrop-blur-xl border-b border-rim shadow-sm'
-          : 'bg-transparent border-b border-transparent'
-      }`}
-    >
-      {/* Logo group */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center text-white flex-shrink-0">
-          <IconScissors />
-        </div>
-        <div className="flex flex-col leading-none">
-          <span className="font-display font-black text-xl tracking-tight text-ink">ELEVATED CUTS</span>
-          <span className="flex items-center gap-1 text-[10px] font-mono text-ink-faint mt-0.5">
-            <IconPin /> LUBBOCK, TX
-          </span>
-        </div>
-      </div>
+    <header className="sticky top-0 z-40 border-b border-rim bg-canvas">
+      <div className={`${CONTAINER} flex h-16 items-center justify-between gap-4`}>
+        <a href="#top" aria-label="Elevated Cuts — back to top" className="flex min-h-12 items-center rounded-lg">
+          <BrandLogo className="w-[124px] sm:w-[148px]" />
+        </a>
 
-      {/* Desktop nav */}
-      <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-ink-dim">
-        <a href="#services" className="hover:text-ink transition-colors">Services</a>
-        <a href="#team"     className="hover:text-ink transition-colors">Our Stylists</a>
-        <a href="#gallery"  className="hover:text-ink transition-colors">The Shop</a>
-        <a href="#info"     className="hover:text-ink transition-colors">Find Us</a>
-      </nav>
+        <nav aria-label="Primary" className="hidden items-center md:flex">
+          {NAV_LINKS.map(link => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="inline-flex min-h-12 items-center rounded-lg px-4 font-display text-lg font-semibold uppercase tracking-wider text-ink-dim transition-colors hover:text-ink"
+            >
+              {link.label}
+            </a>
+          ))}
+        </nav>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onToggleDark}
-          className="w-10 h-10 rounded-full border border-rim flex items-center justify-center text-ink-dim hover:text-ink hover:border-rim-strong transition-all"
-          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {dark ? <IconSun /> : <IconMoon />}
-        </button>
-        <button
-          onClick={onBook}
-          className="h-10 bg-accent text-white font-semibold text-sm px-5 rounded-xl hover:opacity-90 active:scale-[0.97] transition-all"
-        >
-          Book Now
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleDark}
+            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex h-12 w-12 items-center justify-center rounded-xl border border-rim-strong text-ink-dim transition-colors hover:text-ink"
+          >
+            {dark ? <IconSun className="h-5 w-5" /> : <IconMoon className="h-5 w-5" />}
+          </button>
+          <button type="button" onClick={onBook} className={`${BTN_PRIMARY} hidden sm:inline-flex`}>
+            Book Now
+          </button>
+        </div>
       </div>
     </header>
   )
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
+// ─── Tagline strip ───────────────────────────────────────────────────────────
+
+function TaglineStrip() {
+  return (
+    <div className={`${CONTAINER} pt-6 sm:pt-8`}>
+      <p className="font-display text-xl font-bold uppercase leading-tight tracking-wide text-ink sm:text-2xl">
+        Clean <span className="text-accent">Cut.</span> Clean <span className="text-gold">Face.</span> Elevated{' '}
+        <span className="text-accent">Look.</span>
+      </p>
+    </div>
+  )
+}
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
 
 function HeroSection({ onBook }: { onBook: () => void }) {
+  const status = useOpenStatus()
   return (
-    <section className="relative min-h-[100svh] flex flex-col justify-end overflow-hidden">
-      {/* Backdrop image */}
-      <img
-        src="https://images.unsplash.com/photo-1604349779630-1a87d7c571cb?w=1400&h=900&fit=crop&auto=format"
-        alt="Elevated Cuts barbershop interior"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      {/* Gradient overlay — always dark for cinematic effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#080910] via-[#080910]/75 to-[#080910]/20" />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#080910]/60 to-transparent" />
-
-      {/* Open status pill — top-right */}
-      <div className="absolute top-20 right-4 flex items-center gap-2 bg-live-dim border border-live/30 rounded-full px-3 py-1.5">
-        <span className="live-pulse w-2 h-2 bg-live rounded-full block" />
-        <span className="text-live text-[11px] font-mono font-semibold tracking-wide">OPEN NOW</span>
-      </div>
-
-      {/* Hero content */}
-      <div className="relative z-10 px-5 sm:px-8 pb-16 max-w-2xl fade-up">
-        <p className="text-[11px] font-mono font-medium text-accent uppercase tracking-[0.2em] mb-4">
-          Lubbock&apos;s Premier Barber Shop · Est. 2024
-        </p>
-
-        <h1 className="font-display font-black leading-none text-white mb-6" style={{ fontSize: 'clamp(3.5rem, 14vw, 7rem)' }}>
-          SHARPEN<br />YOUR LOOK
-        </h1>
-
-        <p className="text-white/70 text-base sm:text-lg font-light leading-relaxed mb-8 max-w-sm">
-          Precision cuts, expert fades, and real craft at 1018 Slide Rd. Walk-ins always welcome.
-        </p>
-
-        {/* Rating row */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="flex gap-0.5 text-gold">
-            {[1,2,3,4,5].map(i => <IconStar key={i} />)}
-          </div>
-          <span className="text-white/60 text-sm font-mono">4.8 · 120 reviews</span>
-        </div>
-
-        {/* CTA row — 48px min touch targets */}
-        <div className="flex gap-3 flex-wrap">
-          <button
-            onClick={onBook}
-            className="min-h-[48px] flex-1 sm:flex-none sm:min-w-[180px] bg-accent text-white font-semibold text-base rounded-xl px-6 hover:opacity-90 active:scale-[0.98] transition-all"
-          >
-            Book Appointment
-          </button>
-          <a
-            href="#services"
-            className="min-h-[48px] flex items-center justify-center border border-white/30 text-white font-medium rounded-xl px-6 hover:bg-white/10 transition-all"
-          >
-            View Services
-          </a>
-        </div>
-      </div>
-
-      {/* Address badge — bottom-right */}
-      <div className="absolute bottom-5 right-4 text-right hidden sm:block">
-        <p className="text-white/40 text-xs font-mono">1018 Slide Rd · Lubbock, TX 79416</p>
-        <p className="text-white/40 text-xs font-mono">(806) 407-3129</p>
-      </div>
-    </section>
-  )
-}
-
-// ─── Services Section ─────────────────────────────────────────────────────────
-
-function ServicesSection({ loaded }: { loaded: boolean }) {
-  return (
-    <section id="services" className="py-16 px-5 sm:px-8 max-w-2xl mx-auto">
-      {/* Section header */}
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="text-[11px] font-mono font-medium text-accent uppercase tracking-[0.18em] mb-2">
-            App 3 · CMS Menu Feed
+    <section className={`${CONTAINER} pt-4 sm:pt-6`}>
+      <div className="grid overflow-hidden rounded-2xl border border-rim lg:grid-cols-[1.15fr_1fr]">
+        <div className="panel flex flex-col justify-center bg-panel p-6 text-panel-ink sm:p-10 lg:p-12">
+          <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-panel-dim">
+            Lubbock, TX · Est. 2024
           </p>
-          <h2 className="font-display font-black text-5xl text-ink leading-none">THE MENU</h2>
-        </div>
-        <span className="text-ink-faint text-sm font-mono hidden sm:block">Prices from</span>
-      </div>
-
-      {/* Service list */}
-      <div className="divide-y divide-rim">
-        {!loaded
-          ? Array.from({ length: 6 }, (_, i) => <SkeletonServiceCard key={i} />)
-          : SERVICES.map(s => (
-            <div key={s.id} className="group flex items-center justify-between py-4 gap-4 hover:bg-subtle/50 -mx-2 px-2 rounded-lg transition-colors cursor-pointer fade-up">
-              <div className="flex flex-col gap-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-ink truncate">{s.name}</span>
-                  {s.tag && (
-                    <span className="text-[9px] font-mono font-bold tracking-wider bg-gold-dim text-gold rounded-full px-2 py-0.5 border border-gold/20">
-                      {s.tag}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-ink-faint text-xs font-mono">
-                  <IconClock /> {s.duration} min
-                </div>
-              </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <span className="font-mono font-semibold text-lg text-gold">${s.price}</span>
-                <div className="w-7 h-7 rounded-full border border-rim flex items-center justify-center text-ink-faint group-hover:border-accent group-hover:text-accent transition-all">
-                  <IconChevronRight />
-                </div>
-              </div>
-            </div>
-          ))}
-      </div>
-
-      {/* Book CTA strip */}
-      {loaded && (
-        <div className="mt-10 bg-accent-dim border border-accent/20 rounded-2xl p-5 flex items-center justify-between gap-4 fade-up">
-          <div>
-            <p className="font-semibold text-ink text-sm">Walk-ins welcome</p>
-            <p className="text-ink-dim text-xs mt-0.5">Or reserve your seat online — takes under 60 seconds.</p>
+          <h1 className="font-display text-[clamp(3.25rem,14vw,5.5rem)] font-extrabold uppercase leading-[0.88] lg:text-[clamp(3.5rem,6vw,5.5rem)]">
+            Sharpen your
+            <span className="block pt-1">
+              <span className="text-gradient font-bold normal-case italic">Look</span>
+            </span>
+          </h1>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-panel-dim sm:text-lg">
+            Precision fades, men&apos;s facials, and real craft at {SHOP.address1}. Walk-ins always welcome.
+          </p>
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <button type="button" onClick={onBook} className={BTN_PRIMARY}>
+              Book Now
+              <IconArrowRight className="h-5 w-5" />
+            </button>
+            <a href="#team" className={BTN_OUTLINE}>Meet the Stylists</a>
           </div>
-          <a href="#team" className="flex-shrink-0 bg-accent text-white font-semibold text-sm px-4 py-2.5 rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap">
-            Pick a Stylist
-          </a>
         </div>
-      )}
+
+        <div className="relative flex flex-col bg-surface">
+          <div className="flex flex-1 items-center justify-center p-6 sm:p-10">
+            <BrandLogo surface="surface" className="w-full max-w-sm" />
+          </div>
+          <div className="flex flex-col items-start gap-2 border-t border-rim p-4 sm:px-6">
+            <StatusPill open={status.open} label={status.label} />
+            <p className="font-mono text-xs text-ink-dim">{SHOP.address1} · {SHOP.address2}</p>
+          </div>
+          <div className="barber-band h-2" aria-hidden="true" />
+        </div>
+      </div>
     </section>
   )
 }
 
-// ─── Team Section ─────────────────────────────────────────────────────────────
+// ─── Value metrics (4-card highlight panel) ──────────────────────────────────
 
-function TeamSection({ loaded, onBook }: { loaded: boolean; onBook: () => void }) {
+function MetricsGrid() {
   return (
-    <section id="team" className="py-16 bg-subtle">
-      <div className="px-5 sm:px-8 max-w-2xl mx-auto mb-8">
-        <p className="text-[11px] font-mono font-medium text-accent uppercase tracking-[0.18em] mb-2">
-          App 2 · Live Scheduling Feed
-        </p>
-        <h2 className="font-display font-black text-5xl text-ink leading-none">YOUR STYLISTS</h2>
-        <p className="text-ink-dim text-sm mt-2">Real-time availability pulled from the scheduling engine.</p>
-      </div>
+    <section aria-label="Shop highlights" className={`${CONTAINER} pt-px`}>
+      <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-b-2xl border border-t-0 border-rim bg-rim lg:grid-cols-4">
+        {METRICS.map(({ id, title, detail, Icon }) => (
+          <li key={id} className="flex flex-col gap-2 bg-surface p-4 sm:p-6">
+            <Icon className="h-6 w-6 text-gold" />
+            <h3 className="font-display text-xl font-bold uppercase leading-tight text-ink sm:text-2xl">{title}</h3>
+            <p className="text-sm text-ink-dim">{detail}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
-      {/* Horizontal scroll row */}
-      <div className="flex gap-4 overflow-x-auto hide-scrollbar px-5 sm:px-8 pb-4">
-        {!loaded
-          ? Array.from({ length: 4 }, (_, i) => <SkeletonStaffCard key={i} />)
-          : TEAM.map(s => (
-            <div
-              key={s.id}
-              className="flex-shrink-0 w-[168px] bg-surface rounded-2xl p-4 flex flex-col items-center gap-3 border border-rim hover:border-rim-strong hover:-translate-y-1 transition-all duration-200 cursor-pointer fade-up"
+// ─── Promo banner ────────────────────────────────────────────────────────────
+
+function PromoBanner() {
+  return (
+    <section aria-label="Announcement" className="mt-8 bg-amber text-on-amber sm:mt-12">
+      <div className={`${CONTAINER} flex flex-col items-start justify-between gap-4 py-6 sm:flex-row sm:items-center`}>
+        <p className="font-display text-2xl font-extrabold uppercase leading-tight sm:text-3xl">
+          Now booking men&apos;s facials with Alexis
+        </p>
+        <span className="-rotate-2 bg-panel px-4 py-2 font-display text-xl font-bold italic text-panel-ink">
+          Clean cut, clean face!
+        </span>
+      </div>
+    </section>
+  )
+}
+
+// ─── Services menu ───────────────────────────────────────────────────────────
+
+function ServicesSection({ onBook }: { onBook: () => void }) {
+  return (
+    <section id="services" className={`${CONTAINER} py-12 sm:py-16`}>
+      <SectionHeading eyebrow="The Menu">
+        Services <span className="text-gradient">&amp; Pricing</span>
+      </SectionHeading>
+      <ul className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-rim bg-rim lg:grid-cols-5">
+        {SERVICES.map(service => (
+          <li key={service.id} className="bg-surface">
+            <button
+              type="button"
               onClick={onBook}
+              className="group flex h-full min-h-32 w-full flex-col items-start gap-2 p-4 text-left transition-colors hover:bg-accent-dim sm:p-6"
             >
-              {/* Avatar */}
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-display font-black text-xl flex-shrink-0"
-                style={{ backgroundColor: s.color }}
-              >
-                {s.initials}
-              </div>
-
-              {/* Info */}
-              <div className="text-center w-full">
-                <p className="font-semibold text-ink text-sm leading-tight">{s.name}</p>
-                <p className="text-ink-faint text-[11px] mt-0.5 leading-tight">{s.role}</p>
-                <p className="text-ink-faint text-[10px] font-mono mt-1">{s.years} yrs exp.</p>
-              </div>
-
-              {/* Services chips */}
-              <div className="flex flex-wrap gap-1 justify-center">
-                {s.services.slice(0, 2).map(sv => (
-                  <span key={sv} className="text-[9px] font-mono bg-bone text-ink-faint rounded-full px-1.5 py-0.5">{sv}</span>
-                ))}
-              </div>
-
-              {/* Availability status */}
-              <div className={`w-full rounded-xl px-2 py-2 text-center ${s.available ? 'bg-live-dim border border-live/20' : 'bg-bone border border-rim'}`}>
-                {s.available && (
-                  <p className="text-live text-[9px] font-mono font-semibold uppercase tracking-wider mb-0.5">Next Available</p>
-                )}
-                <p className={`text-[10px] font-mono font-medium leading-tight ${s.available ? 'text-ink' : 'text-ink-faint'}`}>
-                  {s.next}
-                </p>
-              </div>
-            </div>
-          ))}
-      </div>
-
-      {/* Book CTA */}
-      {loaded && (
-        <div className="px-5 sm:px-8 max-w-2xl mx-auto mt-6 fade-up">
-          <button
-            onClick={onBook}
-            className="w-full min-h-[52px] bg-ink text-canvas font-semibold text-base rounded-xl hover:opacity-90 active:scale-[0.99] transition-all"
-          >
-            Book Your Appointment
-          </button>
-        </div>
-      )}
-    </section>
-  )
-}
-
-// ─── Gallery + Events ─────────────────────────────────────────────────────────
-
-function GallerySection() {
-  return (
-    <section id="gallery" className="py-16">
-      <div className="px-5 sm:px-8 max-w-2xl mx-auto mb-8">
-        <p className="text-[11px] font-mono font-medium text-gold uppercase tracking-[0.18em] mb-2">
-          App 3 · CMS Lifestyle Feed
-        </p>
-        <h2 className="font-display font-black text-5xl text-ink leading-none">THE SHOP</h2>
-      </div>
-
-      {/* Mosaic grid */}
-      <div className="px-5 sm:px-8 max-w-2xl mx-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 auto-rows-[180px]">
-          {GALLERY.map((img, i) => (
-            <div
-              key={img.id}
-              className={`relative overflow-hidden rounded-2xl bg-bone ${i === 0 ? 'row-span-2' : ''}`}
-            >
-              <img
-                src={img.url}
-                alt={img.alt}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Events ───────────────────────────────────────────────────────────────────
-
-function EventsSection({ loaded }: { loaded: boolean }) {
-  return (
-    <section className="py-16 bg-subtle">
-      <div className="px-5 sm:px-8 max-w-2xl mx-auto">
-        <div className="mb-8">
-          <p className="text-[11px] font-mono font-medium text-gold uppercase tracking-[0.18em] mb-2">
-            App 3 · CMS Events Feed
-          </p>
-          <h2 className="font-display font-black text-5xl text-ink leading-none">WHAT&apos;S GOOD</h2>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {!loaded
-            ? Array.from({ length: 2 }, (_, i) => <SkeletonEventCard key={i} />)
-            : EVENTS.map(ev => (
-              <div key={ev.title} className="bg-surface rounded-2xl p-5 border border-rim fade-up">
-                <div className="flex gap-4 items-start mb-3">
-                  {/* Date block */}
-                  <div className="flex-shrink-0 w-14 h-14 bg-gold-dim border border-gold/20 rounded-xl flex flex-col items-center justify-center">
-                    <span className="text-[9px] font-mono font-bold text-gold uppercase">{ev.day}</span>
-                    <span className="font-display font-black text-lg text-gold leading-tight">{ev.date.split(' ')[1]}</span>
-                    <span className="text-[9px] font-mono text-gold/70">{ev.date.split(' ')[0]}</span>
-                  </div>
-                  {/* Title + desc */}
-                  <div className="min-w-0">
-                    <p className="font-semibold text-ink leading-snug">{ev.title}</p>
-                    <p className="text-ink-dim text-sm mt-1 leading-relaxed">{ev.description}</p>
-                  </div>
-                </div>
-                <button className="mt-1 min-h-[40px] px-5 border border-accent/30 text-accent text-sm font-semibold rounded-full hover:bg-accent-dim transition-colors">
-                  {ev.cta}
-                </button>
-              </div>
-            ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Info / Hours ─────────────────────────────────────────────────────────────
-
-const HOURS = [
-  { day: 'Monday',    open: '9:00 AM', close: '6:00 PM' },
-  { day: 'Tuesday',   open: '9:00 AM', close: '6:00 PM' },
-  { day: 'Wednesday', open: '9:00 AM', close: '6:00 PM' },
-  { day: 'Thursday',  open: '9:00 AM', close: '6:00 PM' },
-  { day: 'Friday',    open: '9:00 AM', close: '6:00 PM' },
-  { day: 'Saturday',  open: '9:00 AM', close: '2:00 PM' },
-  { day: 'Sunday',    open: null,       close: null       },
-]
-
-const TODAY_IDX = new Date().getDay() // 0=Sun
-const REORDERED_HOURS = [...HOURS.slice(1), HOURS[0]] // Mon-Sun display
-
-function InfoSection() {
-  return (
-    <section id="info" className="py-16 px-5 sm:px-8">
-      <div className="max-w-2xl mx-auto">
-        <h2 className="font-display font-black text-5xl text-ink leading-none mb-10">FIND US</h2>
-
-        <div className="grid sm:grid-cols-2 gap-6">
-          {/* Contact card */}
-          <div className="bg-surface border border-rim rounded-2xl p-6 flex flex-col gap-4">
-            <h3 className="font-display font-bold text-2xl text-ink">Elevated Cuts</h3>
-            <div className="flex flex-col gap-3 text-sm">
-              <div className="flex items-start gap-3 text-ink-dim">
-                <IconPin />
-                <div>
-                  <p>1018 Slide Rd</p>
-                  <p>Lubbock, TX 79416</p>
-                </div>
-              </div>
-              <a href="tel:8064073129" className="flex items-center gap-3 text-ink-dim hover:text-accent transition-colors">
-                <IconPhone /> (806) 407-3129
-              </a>
-              <a href="mailto:elevatedcuts2024@gmail.com" className="flex items-center gap-3 text-ink-dim hover:text-accent transition-colors">
-                <IconMail /> elevatedcuts2024@gmail.com
-              </a>
-            </div>
-
-            {/* Payment methods */}
-            <div className="pt-3 border-t border-rim">
-              <p className="text-[10px] font-mono text-ink-faint uppercase tracking-wider mb-2">We Accept</p>
-              <div className="flex flex-wrap gap-1.5">
-                {['Apple Pay', 'Google Pay', 'CashApp', 'Visa', 'MC', 'Amex'].map(m => (
-                  <span key={m} className="text-[10px] font-mono bg-bone text-ink-faint rounded-md px-2 py-1 border border-rim">
-                    {m}
+              <span className="min-h-5">
+                {service.tag && (
+                  <span className="rounded-full border border-gold/30 bg-gold-dim px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-gold">
+                    {service.tag}
                   </span>
-                ))}
-              </div>
-            </div>
+                )}
+              </span>
+              <span className="font-display text-xl font-bold uppercase leading-tight text-ink">{service.name}</span>
+              <span className="mt-auto flex w-full items-end justify-between gap-2">
+                <span className="font-mono text-xs text-ink-faint">{service.duration} min</span>
+                <span className="font-display text-2xl font-extrabold text-gold">${service.price}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+// ─── Stylist roster ──────────────────────────────────────────────────────────
+
+function StylistCard({ stylist, onBook }: { stylist: Stylist; onBook: (id: string) => void }) {
+  const { name, initials, role, badge, specialty, bio, photo, photoPosition, bookingUrl } = stylist
+  const ctaLabel = 'View Services & Book'
+
+  return (
+    <li className="flex flex-col overflow-hidden rounded-2xl border border-rim bg-surface">
+      <div className="relative aspect-[5/4] bg-bone sm:aspect-[4/5]">
+        {photo ? (
+          <img
+            src={photo}
+            alt={`${name}, ${role}`}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: photoPosition }}
+          />
+        ) : (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-rim-strong bg-subtle"
+            role="img"
+            aria-label={`${name} — photo coming soon`}
+          >
+            <span className="font-display text-7xl font-extrabold text-ink-faint">{initials}</span>
+            <span className="font-mono text-xs font-semibold uppercase tracking-widest text-ink-faint">
+              Photo coming soon
+            </span>
+          </div>
+        )}
+        <span className="absolute left-4 top-4 rounded-lg bg-amber px-3 py-1 font-mono text-xs font-bold uppercase tracking-wide text-on-amber shadow-md">
+          {badge}
+        </span>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
+        <div>
+          <h3 className="font-display text-3xl font-extrabold uppercase leading-none text-ink">{name}</h3>
+          <p className="mt-1 font-mono text-xs uppercase tracking-wider text-ink-faint">{role}</p>
+        </div>
+        <p className="text-sm font-semibold text-gold">{specialty}</p>
+        <p className="text-sm leading-relaxed text-ink-dim">{bio}</p>
+
+        {bookingUrl ? (
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${BTN_PRIMARY} mt-auto w-full`}
+          >
+            {ctaLabel}
+            <IconArrowUpRight className="h-5 w-5" />
+            <span className="sr-only">(opens in a new tab)</span>
+          </a>
+        ) : (
+          <button type="button" onClick={() => onBook(stylist.id)} className={`${BTN_PRIMARY} mt-auto w-full`}>
+            {ctaLabel}
+            <IconArrowRight className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function TeamSection({ onBook }: { onBook: (id: string) => void }) {
+  return (
+    <section id="team" className="border-y border-rim bg-subtle py-12 sm:py-16">
+      <div className={CONTAINER}>
+        <SectionHeading eyebrow="The Crew">
+          Our <span className="text-gradient">Stylists</span>
+        </SectionHeading>
+        <ul className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
+          {STYLISTS.map(stylist => (
+            <StylistCard key={stylist.id} stylist={stylist} onBook={onBook} />
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+// ─── What's new (flyer) ──────────────────────────────────────────────────────
+
+function NewAtShopSection({ onBook }: { onBook: () => void }) {
+  return (
+    <section id="new" className={`${CONTAINER} py-12 sm:py-16`}>
+      <SectionHeading eyebrow="At the Shop">
+        Fresh <span className="text-gradient">at the shop</span>
+      </SectionHeading>
+
+      <div className="grid items-start gap-6 md:grid-cols-2 md:gap-8">
+        <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-rim md:max-w-none">
+          <CroppedImage
+            src={flyerSrc}
+            alt="Elevated Cuts flyer: Laura is now available for appointments and men's facials are offered with licensed esthetician Alexis."
+            srcWidth={1640}
+            srcHeight={2059}
+            crop={{ x: 0.1005, y: 0.1953, w: 0.7304, h: 0.7549 }}
+            className="w-full"
+          />
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <ul className="grid gap-px overflow-hidden rounded-2xl border border-rim bg-rim">
+            {PROMOS.map(({ id, title, detail, Icon }) => (
+              <li key={id} className="flex items-start gap-4 bg-surface p-4 sm:p-6">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gold-dim text-gold">
+                  <Icon className="h-6 w-6" />
+                </span>
+                <div>
+                  <h3 className="font-display text-2xl font-bold uppercase leading-tight text-ink">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-dim">{detail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <button type="button" onClick={onBook} className={BTN_PRIMARY}>Book an Appointment</button>
+            <a href={SHOP.phoneHref} className={BTN_GHOST}>
+              <IconPhone className="h-5 w-5" />
+              Call the Shop
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ─── Visit (storefront, hours, contact) ──────────────────────────────────────
+
+function VisitSection() {
+  const status = useOpenStatus()
+  return (
+    <section id="visit" className="border-t border-rim bg-subtle py-12 sm:py-16">
+      <div className={CONTAINER}>
+        <SectionHeading eyebrow="Find Us">
+          Visit the <span className="text-gradient">Shop</span>
+        </SectionHeading>
+
+        <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-rim bg-bone md:aspect-auto md:min-h-[520px]">
+            <img
+              src={storeFrontSrc}
+              alt="Elevated Cuts storefront on Slide Rd with the lit sign, green awning and walk-ins welcome chalkboard."
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-top"
+            />
           </div>
 
-          {/* Hours card */}
-          <div className="bg-surface border border-rim rounded-2xl p-6">
-            <h3 className="font-display font-bold text-2xl text-ink mb-4">Hours</h3>
-            <div className="flex flex-col gap-2">
-              {REORDERED_HOURS.map((h, i) => {
-                const isToday = ((i + 1) % 7) === TODAY_IDX
-                return (
-                  <div
-                    key={h.day}
-                    className={`flex items-center justify-between text-sm py-1.5 px-2 rounded-lg -mx-2 ${isToday ? 'bg-accent-dim' : ''}`}
-                  >
-                    <span className={`font-medium ${isToday ? 'text-accent' : 'text-ink-dim'}`}>
-                      {h.day} {isToday && <span className="text-[9px] font-mono ml-1 text-accent/70">TODAY</span>}
-                    </span>
-                    <span className={`font-mono text-xs ${h.open ? (isToday ? 'text-ink' : 'text-ink-dim') : 'text-dead'}`}>
-                      {h.open ? `${h.open} – ${h.close}` : 'Closed'}
-                    </span>
-                  </div>
-                )
-              })}
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <div className="rounded-2xl border border-rim bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rim p-4 sm:px-6">
+                <h3 className="font-display text-2xl font-bold uppercase text-ink">Hours</h3>
+                <StatusPill open={status.open} label={status.label} />
+              </div>
+              <ul className="p-2 sm:px-4">
+                {HOURS.map((h, i) => {
+                  const isToday = i === status.dayIdx
+                  return (
+                    <li
+                      key={h.day}
+                      className={`flex min-h-10 items-center justify-between rounded-lg px-2 text-sm sm:px-4 ${
+                        isToday ? 'bg-accent-dim font-semibold text-ink' : 'text-ink-dim'
+                      }`}
+                    >
+                      <span>
+                        {h.day}
+                        {isToday && <span className="ml-2 font-mono text-[10px] uppercase text-accent">Today</span>}
+                      </span>
+                      <span className="font-mono text-xs">
+                        {h.range ? `${formatMinutes(h.range[0])} – ${formatMinutes(h.range[1])}` : 'Closed'}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-rim bg-surface">
+              <a
+                href={SHOP.mapsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-14 items-center gap-4 border-b border-rim px-4 py-2 text-ink transition-colors hover:bg-accent-dim sm:px-6"
+              >
+                <IconPin className="h-5 w-5 shrink-0 text-gold" />
+                <span className="text-sm">
+                  {SHOP.address1}, {SHOP.address2}
+                  <span className="sr-only"> (opens directions in a new tab)</span>
+                </span>
+              </a>
+              <a
+                href={SHOP.phoneHref}
+                className="flex min-h-14 items-center gap-4 border-b border-rim px-4 py-2 text-ink transition-colors hover:bg-accent-dim sm:px-6"
+              >
+                <IconPhone className="h-5 w-5 shrink-0 text-gold" />
+                <span className="text-sm">{SHOP.phoneDisplay}</span>
+              </a>
+              <a
+                href={`mailto:${SHOP.email}`}
+                className="flex min-h-14 items-center gap-4 px-4 py-2 text-ink transition-colors hover:bg-accent-dim sm:px-6"
+              >
+                <IconMail className="h-5 w-5 shrink-0 text-gold" />
+                <span className="break-all text-sm">{SHOP.email}</span>
+              </a>
+            </div>
+
+            <div className="rounded-2xl border border-rim bg-surface p-4 sm:p-6">
+              <p className="mb-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-ink-faint">
+                We accept
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {PAYMENT_METHODS.map(m => (
+                  <li key={m} className="rounded-lg border border-rim bg-bone px-3 py-1 font-mono text-xs text-ink-dim">
+                    {m}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
@@ -580,81 +579,72 @@ function InfoSection() {
   )
 }
 
-// ─── Footer ───────────────────────────────────────────────────────────────────
+// ─── Footer + mobile action bar ──────────────────────────────────────────────
 
 function SiteFooter() {
   return (
-    <footer className="bg-subtle border-t border-rim py-10 px-5 sm:px-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-accent rounded-xl flex items-center justify-center text-white">
-              <IconScissors />
-            </div>
-            <div>
-              <p className="font-display font-black text-lg text-ink">ELEVATED CUTS</p>
-              <p className="text-[10px] font-mono text-ink-faint">LUBBOCK, TX · EST. 2024</p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 text-sm font-medium text-ink-dim">
-            <a href="#services" className="hover:text-ink transition-colors">Services</a>
-            <a href="#team"     className="hover:text-ink transition-colors">Stylists</a>
-            <a href="#info"     className="hover:text-ink transition-colors">Hours</a>
-          </div>
+    <footer className="border-t border-rim bg-canvas pb-28 pt-10 md:pb-10">
+      <div className={`${CONTAINER} flex flex-col gap-8`}>
+        <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+          <BrandLogo className="w-[148px]" />
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-2">
+            {NAV_LINKS.map(link => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="inline-flex min-h-12 items-center px-2 font-display text-lg font-semibold uppercase tracking-wider text-ink-dim hover:text-ink"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
         </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-6 border-t border-rim">
-          <p className="text-xs text-ink-faint font-mono">© 2026 Elevated Cuts · 1018 Slide Rd · Lubbock TX</p>
-          <p className="text-xs text-ink-faint">
-            <span className="font-mono">Avg wait · </span>
-            <span className="text-live font-mono font-medium">~12 min today</span>
-          </p>
-        </div>
+        <p className="border-t border-rim pt-6 font-mono text-xs text-ink-faint">
+          © {new Date().getFullYear()} Elevated Cuts · {SHOP.address1} · Lubbock, TX
+        </p>
       </div>
     </footer>
   )
 }
 
-// ─── Page root ────────────────────────────────────────────────────────────────
+function MobileActionBar({ onBook }: { onBook: () => void }) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-rim bg-canvas/95 p-2 pb-[max(8px,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-2 gap-2">
+        <a href={SHOP.phoneHref} className={BTN_GHOST}>
+          <IconPhone className="h-5 w-5" />
+          Call
+        </a>
+        <button type="button" onClick={onBook} className={BTN_PRIMARY}>Book Now</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page root ───────────────────────────────────────────────────────────────
 
 interface LandingPageProps {
-  dark: boolean; onToggleDark: () => void; onBook: () => void
+  dark: boolean
+  onToggleDark: () => void
+  onBook: (stylistId?: string) => void
 }
 
 export default function LandingPage({ dark, onToggleDark, onBook }: LandingPageProps) {
-  const [scrolled,       setScrolled]       = useState(false)
-  const [servicesLoaded, setServicesLoaded] = useState(false)
-  const [teamLoaded,     setTeamLoaded]     = useState(false)
-  const [eventsLoaded,   setEventsLoaded]   = useState(false)
-
-  useEffect(() => {
-    // Simulate asynchronous data hydration from App 2 + App 3
-    const t1 = setTimeout(() => setServicesLoaded(true), 1100)
-    const t2 = setTimeout(() => setTeamLoaded(true),     1700)
-    const t3 = setTimeout(() => setEventsLoaded(true),   2300)
-
-    const onScroll = () => setScrolled(window.scrollY > 48)
-    window.addEventListener('scroll', onScroll, { passive: true })
-
-    return () => {
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
-      window.removeEventListener('scroll', onScroll)
-    }
-  }, [])
-
   return (
-    <div>
-      <SiteHeader dark={dark} onToggleDark={onToggleDark} onBook={onBook} scrolled={scrolled} />
+    <div id="top">
+      <SiteHeader dark={dark} onToggleDark={onToggleDark} onBook={() => onBook()} />
       <main>
-        <HeroSection onBook={onBook} />
-        <ServicesSection loaded={servicesLoaded} />
-        <TeamSection     loaded={teamLoaded}     onBook={onBook} />
-        <GallerySection />
-        <EventsSection   loaded={eventsLoaded} />
-        <InfoSection />
+        <TaglineStrip />
+        <HeroSection onBook={() => onBook()} />
+        <MetricsGrid />
+        <PromoBanner />
+        <ServicesSection onBook={() => onBook()} />
+        <TeamSection onBook={onBook} />
+        <NewAtShopSection onBook={() => onBook()} />
+        <VisitSection />
       </main>
       <SiteFooter />
+      <MobileActionBar onBook={() => onBook()} />
     </div>
   )
 }

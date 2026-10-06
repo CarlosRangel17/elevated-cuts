@@ -1,47 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
-/* ─── Semantic token layer ─────────────────────────────────── */
+/* ─── Semantic token layer ─────────────────────────────────────
+   Light: paper white canvas, charcoal ink, electric blue + amber.
+   Dark:  midnight slate-graphite canvas, silver-ivory ink.
+   ──────────────────────────────────────────────────────────── */
 :root {
-  --canvas:        #F4F3EF;
+  --canvas:        #F6F5F1;
   --surface:       #FFFFFF;
-  --surface-hi:    #F0EEE9;
-  --subtle:        #E8E7E2;
-  --ink:           #0E0E1A;
-  --ink-dim:       #56566A;
-  --ink-faint:     #9898AB;
-  --accent:        #1A63EE;
-  --accent-dim:    rgba(26,99,238,0.10);
-  --gold:          #D9920E;
-  --gold-dim:      rgba(217,146,14,0.12);
-  --rim:           #DDDCD5;
-  --rim-strong:    #C4C3BB;
-  --bone:          #E4E3DE;
-  --bone-hi:       #EEEDEA;
-  --live:          #16A34A;
-  --live-dim:      rgba(22,163,74,0.12);
-  --dead:          #DC2626;
+  --surface-hi:    #EFEEE9;
+  --subtle:        #ECEBE6;
+  --ink:           #1E2229;
+  --ink-dim:       #4B5260;
+  --ink-faint:     #636B78;
+  --accent:        #1F5BFF;
+  --accent-dim:    rgba(31, 91, 255, 0.10);
+  --on-accent:     #FFFFFF;
+  --ring:          #1F5BFF;
+  --gold:          #B26B00;
+  --gold-dim:      rgba(245, 165, 36, 0.18);
+  --amber:         #F5A524;
+  --on-amber:      #15171C;
+  --rim:           #DAD8D0;
+  --rim-strong:    #B9B6AC;
+  --bone:          #E6E4DE;
+  --bone-hi:       #F0EEEA;
+  --live:          #15803D;
+  --live-dim:      rgba(21, 128, 61, 0.12);
+  --dead:          #B91C1C;
+
+  --panel:         #141A26;
+  --panel-ink:     #F3F0E8;
+  --panel-dim:     #B4BBC9;
+  --panel-rim:     rgba(255, 255, 255, 0.14);
+
+  --grad-a:        #1F5BFF;
+  --grad-mid:      #E5483A;
+  --grad-b:        #D98200;
 }
 
 .dark {
-  --canvas:        #080910;
-  --surface:       #0E0F1A;
-  --surface-hi:    #141528;
-  --subtle:        #1A1B2E;
-  --ink:           #EDE8DD;
-  --ink-dim:       #9898AB;
-  --ink-faint:     #56566A;
-  --accent:        #4282FF;
-  --accent-dim:    rgba(66,130,255,0.14);
-  --gold:          #F0A820;
-  --gold-dim:      rgba(240,168,32,0.14);
-  --rim:           #1C1D2C;
-  --rim-strong:    #282940;
-  --bone:          #181928;
-  --bone-hi:       #20212E;
-  --live:          #22C55E;
-  --live-dim:      rgba(34,197,94,0.12);
+  --canvas:        #10141B;
+  --surface:       #171C26;
+  --surface-hi:    #1D2330;
+  --subtle:        #1B212C;
+  --ink:           #ECE9E1;
+  --ink-dim:       #AEB4C0;
+  --ink-faint:     #8A92A1;
+  --accent:        #5B8CFF;
+  --accent-dim:    rgba(91, 140, 255, 0.16);
+  --on-accent:     #0B1020;
+  --ring:          #8BAEFF;
+  --gold:          #FFB938;
+  --gold-dim:      rgba(255, 185, 56, 0.16);
+  --amber:         #FFB938;
+  --rim:           #262D3B;
+  --rim-strong:    #394255;
+  --bone:          #202735;
+  --bone-hi:       #283042;
+  --live:          #4ADE80;
+  --live-dim:      rgba(74, 222, 128, 0.14);
   --dead:          #F87171;
+
+  --panel:         #1A2233;
+  --panel-rim:     rgba(255, 255, 255, 0.10);
+
+  --grad-a:        #7FA6FF;
+  --grad-mid:      #FF7A59;
+  --grad-b:        #FFB938;
 }
 
 /* ─── Tailwind v4 theme mapping ───────────────────────────── */
@@ -55,8 +81,11 @@
   --color-ink-faint:    var(--ink-faint);
   --color-accent:       var(--accent);
   --color-accent-dim:   var(--accent-dim);
+  --color-on-accent:    var(--on-accent);
   --color-gold:         var(--gold);
   --color-gold-dim:     var(--gold-dim);
+  --color-amber:        var(--amber);
+  --color-on-amber:     var(--on-amber);
   --color-rim:          var(--rim);
   --color-rim-strong:   var(--rim-strong);
   --color-bone:         var(--bone);
@@ -64,14 +93,26 @@
   --color-live:         var(--live);
   --color-live-dim:     var(--live-dim);
   --color-dead:         var(--dead);
+  --color-panel:        var(--panel);
+  --color-panel-ink:    var(--panel-ink);
+  --color-panel-dim:    var(--panel-dim);
+  --color-panel-rim:    var(--panel-rim);
 
   --font-sans:    'Outfit', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', 'Courier New', monospace;
   --font-display: 'Barlow Condensed', system-ui, sans-serif;
 }
 
+/* Sharper, industrial corner scale (overrides Tailwind defaults) */
+@theme {
+  --radius-lg:  4px;
+  --radius-xl:  6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 12px;
+}
+
 /* ─── Global resets ───────────────────────────────────────── */
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 
 body {
   margin: 0;
@@ -80,37 +121,81 @@ body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
 ::-webkit-scrollbar          { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track    { background: transparent; }
 ::-webkit-scrollbar-thumb    { background: var(--rim-strong); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
 
-/* ─── Skeleton shimmer ────────────────────────────────────── */
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+/* Freeze transitions for the frames around a theme flip so gradients,
+   blend modes and backdrop filters repaint atomically (no square flashes). */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+  animation-play-state: paused !important;
 }
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--bone)    25%,
-    var(--bone-hi) 50%,
-    var(--bone)    75%
+
+/* ─── Brand text gradient ─────────────────────────────────────
+   Promoted to its own GPU layer; padding keeps italic glyph
+   overhang inside the clip box so edges never render as blocks. */
+.text-gradient {
+  display: inline-block;
+  padding: 0 0.12em 0.04em 0.04em;
+  margin: 0 -0.12em -0.04em -0.04em;
+  background-image: linear-gradient(100deg, var(--grad-a) 0%, var(--grad-mid) 50%, var(--grad-b) 100%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.panel {
+  --grad-a: #7FA6FF;
+  --grad-mid: #FF7A59;
+  --grad-b: #FFB938;
+}
+
+/* ─── Logo: black-on-white artwork that adapts to both themes ─ */
+/* contrast() clips the lossy webp's near-white/near-black halo so the
+   blend resolves to the exact surface colour (no faint rectangle). */
+.brand-logo-img {
+  filter: contrast(2.4);
+  mix-blend-mode: multiply;
+}
+.dark .brand-logo-img {
+  filter: contrast(2.4) invert(1);
+  mix-blend-mode: screen;
+}
+
+/* ─── Barber-pole accent band ─────────────────────────────── */
+.barber-band {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--accent) 0 8px,
+    transparent 8px 16px,
+    var(--amber) 16px 24px,
+    transparent 24px 32px
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.6s infinite linear;
-  border-radius: 6px;
 }
 
 /* ─── Entrance animations ─────────────────────────────────── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0);    }
 }
-.fade-up { animation: fadeUp 0.45s ease forwards; }
+.fade-up { animation: fadeUp 0.45s ease both; }
 
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
@@ -120,10 +205,14 @@ body {
 
 @keyframes pulseRing {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.6; transform: scale(1.5); }
+  50%      { opacity: 0.6; transform: scale(1.5); }
 }
 .live-pulse { animation: pulseRing 1.8s ease infinite; }
 
-/* ─── Scrollable rows without scrollbar chrome ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .fade-up, .sheet-up, .live-pulse { animation: none; }
+}
+
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
