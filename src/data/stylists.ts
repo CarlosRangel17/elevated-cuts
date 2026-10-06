@@ -1,9 +1,3 @@
-import evelynPhoto from '../assets/stylists/evelyn-owner.webp'
-import alexisPhoto from '../assets/stylists/alexis-facials-stylist.webp'
-import angelaPhoto from '../assets/stylists/angie-stylist.webp'
-import melindaPhoto from '../assets/stylists/melina-stylist.webp'
-import princessPhoto from '../assets/stylists/princess-stylist.webp'
-
 export interface Stylist {
   id: string
   name: string
@@ -28,7 +22,7 @@ export const STYLISTS: Stylist[] = [
     badge: '18+ Yrs Experience',
     specialty: "Men's Precision Haircuts & Fades",
     bio: 'Owner and operator with 18+ years behind the chair. Sharp fades, clean tapers, built to last.',
-    photo: evelynPhoto,
+    photo: '/assets/stylists/evelyn-owner.webp',
     photoPosition: '72% 18%',
   },
   {
@@ -39,7 +33,7 @@ export const STYLISTS: Stylist[] = [
     badge: 'Skin & Brow Specialist',
     specialty: "Men's Facials · Custom Brow Mapping",
     bio: 'Founder of Brilla by Alexis. Men\'s facials, custom brow mapping, and specialized skin treatments.',
-    photo: alexisPhoto,
+    photo: '/assets/stylists/alexis-facials-stylist.webp',
     photoPosition: '25% 25%',
     bookingUrl: 'https://square.site',
   },
@@ -51,7 +45,7 @@ export const STYLISTS: Stylist[] = [
     badge: 'Stylist',
     specialty: "Men's Cuts · Kids' Cuts",
     bio: "Classic men's cuts and kids' cuts. Walk-ins welcome.",
-    photo: angelaPhoto,
+    photo: '/assets/stylists/angie-stylist.webp',
     photoPosition: '38% 20%',
   },
   {
@@ -62,7 +56,7 @@ export const STYLISTS: Stylist[] = [
     badge: 'Stylist',
     specialty: "Men's Cuts · Buzz Cuts · Fades",
     bio: 'Clean, dependable cuts from buzz cuts to fades. Walk-ins welcome.',
-    photo: melindaPhoto,
+    photo: '/assets/stylists/melina-stylist.webp',
     photoPosition: '66% 30%',
   },
   {
@@ -73,7 +67,7 @@ export const STYLISTS: Stylist[] = [
     badge: 'Stylist',
     specialty: "Fades · Men's Cuts · Beard",
     bio: 'Detail-first fades, cuts, and beard work.',
-    photo: princessPhoto,
+    photo: '/assets/stylists/princess-stylist.webp',
     photoPosition: '55% 40%',
     bookingUrl: 'https://square.site',
   },

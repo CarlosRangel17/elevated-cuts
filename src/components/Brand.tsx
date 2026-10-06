@@ -1,4 +1,4 @@
-import logoSrc from '../assets/elevated-cuts-logo.webp'
+const LOGO_SRC = '/assets/elevated-cuts-logo.webp'
 
 /** Fractions (0–1) of the source image that should stay visible. */
 export interface Crop {
@@ -66,7 +66,7 @@ export function BrandLogo({ className = '', surface = 'canvas' }: BrandLogoProps
   return (
     <div className={`isolate ${bg} ${className}`}>
       <CroppedImage
-        src={logoSrc}
+        src={LOGO_SRC}
         alt="Elevated Cuts"
         srcWidth={500}
         srcHeight={500}

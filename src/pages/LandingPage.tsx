@@ -6,8 +6,9 @@ import {
   IconArrowRight, IconArrowUpRight, IconClock, IconDoor, IconMail, IconMoon,
   IconPhone, IconPin, IconScissors, IconSparkle, IconSun, IconUser,
 } from '../components/icons'
-import flyerSrc from '../assets/elevated-cuts-flyer.webp'
-import storeFrontSrc from '../assets/elevated-cuts-store-front.webp'
+
+const FLYER_SRC = '/assets/elevated-cuts-flyer.webp'
+const STOREFRONT_SRC = '/assets/elevated-cuts-store-front.webp'
 
 // ─── Data contracts ──────────────────────────────────────────────────────────
 
@@ -444,7 +445,7 @@ function NewAtShopSection({ onBook }: { onBook: () => void }) {
       <div className="grid items-start gap-6 md:grid-cols-2 md:gap-8">
         <div className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-rim md:max-w-none">
           <CroppedImage
-            src={flyerSrc}
+            src={FLYER_SRC}
             alt="Elevated Cuts flyer: Laura is now available for appointments and men's facials are offered with licensed esthetician Alexis."
             srcWidth={1640}
             srcHeight={2059}
@@ -494,7 +495,7 @@ function VisitSection() {
         <div className="grid gap-6 md:grid-cols-2 md:gap-8">
           <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-rim bg-bone md:aspect-auto md:min-h-[520px]">
             <img
-              src={storeFrontSrc}
+              src={STOREFRONT_SRC}
               alt="Elevated Cuts storefront on Slide Rd with the lit sign, green awning and walk-ins welcome chalkboard."
               loading="lazy"
               decoding="async"
